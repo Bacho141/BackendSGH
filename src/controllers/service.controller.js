@@ -25,7 +25,7 @@ exports.createService = async (req, res) => {
 exports.getAllServices = async (req, res) => {
   try {
     const services = await Service.find().sort({ numero: 1 });
-    return res.status(200).json({ results: services });
+    return res.status(200).json({ data: services });
   } catch (err) {
     console.error('Erreur récupération services :', err);
     return res.status(500).json({ message: 'Impossible de récupérer les services.' });
@@ -90,6 +90,42 @@ exports.bulkCreateServices = async (req, res) => {
   } catch (err) {
     console.error('bulkCreateServices error', err);
     return res.status(500).json({ message: 'Erreur lors de l’insertion en bulk.' });
+  }
+};
+
+
+
+/**
+ * GET /api/service/category/:cat
+ * Renvoie tous les services dont category == :cat
+ */
+exports.getByCategory = async (req, res) => {
+  try {
+    const { cat } = req.params;
+    // Vérifier la validité de la catégorie
+    if (!Service.schema.path('category').enumValues.includes(cat)) {
+      return res.status(400).json({ success: false, message: 'Catégorie invalide.' });
+    }
+    const services = await Service.find({ category: cat });
+    res.json({ success: true, data: services });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+/**
+ * GET /api/service/search/:term
+ * Renvoie tous les services dont le label contient :term (insensible à la casse)
+ */
+exports.search = async (req, res) => {
+  try {
+    const { term } = req.params;
+    // Construction d'une regex "contains", insensible à la casse
+    const regex = new RegExp(term, 'i');
+    const services = await Service.find({ label: regex });
+    res.json({ success: true, data: services });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 

@@ -6,8 +6,9 @@ const cors = require('cors');
 const morgan = require('morgan');
 
 const authRoutes = require('./src/routes/auth.routes');
-const productRoutes = require('./src/routes/products.routes');
 const serviceRoutes = require('./src/routes/sercice.routs');
+const caissierRoutes = require('./src/routes/caissier.routes');
+const receiptRoutes = require('./src/routes/receipt.routes');
 
 // Configuration
 const app = express();
@@ -18,8 +19,9 @@ app.use(morgan('dev'));
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/products', productRoutes);
 app.use('/api/service', serviceRoutes);
+app.use('/api/agent', caissierRoutes);
+app.use('/api/receipt', receiptRoutes);
 
 
 // Connexion MongoDB
