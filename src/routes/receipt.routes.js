@@ -8,7 +8,8 @@ const {
   getReceiptsByDate,
   getReceiptById,
   updateReceipt,
-  deleteReceipt
+  deleteReceipt,
+  updateReceiptStatus
 } = require('../controllers/receipt.controller');
 
 // Create a new receipt
@@ -21,6 +22,8 @@ router.get('/date/:date', auth, getReceiptsByDate);
 router.get('/:id', auth, getReceiptById);
 // Update a receipt
 router.put('/:id', auth, updateReceipt);
+// Update receipt status (paid/due)
+router.put('/:receiptNumber/status', auth, updateReceiptStatus);
 // Delete a receipt
 router.delete('/:id', auth, deleteReceipt);
 

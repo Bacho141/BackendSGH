@@ -4,11 +4,31 @@ const Receipt = require('../models/receipt.model');
 exports.createReceipt = async (req, res) => {
   try {
     const data = req.body;
+    console.log('🔍 Receipt Create - Données reçues:', {
+      receiptNumber: data.receiptNumber,
+      nomCaissier: data.nomCaissier,
+      client: data.client?.name + ' ' + data.client?.firstname,
+      total: data.total,
+      produits: data.produits?.length || 0
+    });
+    
+    console.log('🔍 Receipt Create - User info from middleware:', {
+      userId: req.userId,
+      userRole: req.userRole,
+      userNomComplet: req.userNomComplet
+    });
+    
     const receipt = new Receipt(data);
     await receipt.save();
+    
+    console.log('✅ Receipt Create - Reçu créé avec succès:', {
+      id: receipt._id,
+      nomCaissier: receipt.nomCaissier
+    });
+    
     return res.status(201).json(receipt);
   } catch (err) {
-    console.error('Erreur création reçu :', err);
+    console.error('❌ Receipt Create - Erreur création reçu :', err);
     return res.status(500).json({ message: 'Impossible de créer le reçu.' });
   }
 };
@@ -179,5 +199,66 @@ exports.deleteReceipt = async (req, res) => {
   } catch (err) {
     console.error('Erreur suppression reçu :', err);
     return res.status(500).json({ message: 'Impossible de supprimer le reçu.' });
+  }
+};
+
+// Update receipt status (paid/due)
+exports.updateReceiptStatus = async (req, res) => {
+  try {
+    const { receiptNumber } = req.params;
+    const { paid, due } = req.body;
+
+    console.log('🔍 Update Receipt Status - Données reçues:', {
+      receiptNumber,
+      paid,
+      due,
+      userRole: req.userRole
+    });
+
+    // Validation des données
+    if (typeof paid !== 'number' || typeof due !== 'number') {
+      return res.status(400).json({ 
+        message: 'Les montants paid et due doivent être des nombres.' 
+      });
+    }
+
+    if (paid < 0 || due < 0) {
+      return res.status(400).json({ 
+        message: 'Les montants ne peuvent pas être négatifs.' 
+      });
+    }
+
+    // Trouver et mettre à jour le reçu
+    const updatedReceipt = await Receipt.findOneAndUpdate(
+      { receiptNumber: receiptNumber },
+      { 
+        paid: paid,
+        due: due
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedReceipt) {
+      return res.status(404).json({ 
+        message: 'Reçu non trouvé.' 
+      });
+    }
+
+    console.log('✅ Update Receipt Status - Statut mis à jour:', {
+      receiptNumber: updatedReceipt.receiptNumber,
+      paid: updatedReceipt.paid,
+      due: updatedReceipt.due
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Statut mis à jour avec succès',
+      receipt: updatedReceipt
+    });
+  } catch (err) {
+    console.error('❌ Update Receipt Status - Erreur:', err);
+    return res.status(500).json({ 
+      message: 'Impossible de mettre à jour le statut du reçu.' 
+    });
   }
 };

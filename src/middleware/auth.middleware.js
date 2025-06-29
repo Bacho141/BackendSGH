@@ -26,16 +26,26 @@ module.exports = (req, res, next) => {
   const token = auth.split(' ')[1];
   try {
     const payload = jwt.verify(token, jwtSecret);
-    console.log('JWT payload:', payload);
+    console.log('🔍 Auth Middleware - JWT payload complet:', payload);
 
     // Ici on doit injecter :
     req.userId   = payload.id;     // ← ID MongoDB
-    console.log('Injected userId:', req.userId);
+    console.log('🔍 Auth Middleware - Injected userId:', req.userId);
     
     req.userRole = payload.role;   // ← 'Admin' ou 'Agent'
-    console.log('Injected userRole:', req.userRole);
+    console.log('🔍 Auth Middleware - Injected userRole:', req.userRole);
+    
+    // Ajouter le nomComplet si disponible
+    if (payload.nomComplet) {
+      req.userNomComplet = payload.nomComplet;
+      console.log('🔍 Auth Middleware - Injected userNomComplet:', req.userNomComplet);
+    } else {
+      console.log('⚠️ Auth Middleware - nomComplet non trouvé dans le payload');
+    }
+    
     return next();
   } catch (err) {
+    console.error('❌ Auth Middleware - Erreur de vérification token:', err);
     return res.status(401).json({ message: 'Token invalide' });
   }
 };

@@ -10,12 +10,12 @@ const jwt = require('jsonwebtoken');
 const { jwtSecret, jwtExpiresIn } = require('../config/config');
 
 /**
- * Génère un JWT avec id et role dans le payload
- * @param {{ id: ObjectId|string, role: string }} payload 
+ * Génère un JWT avec le payload complet
+ * @param {Object} payload - Le payload complet à inclure dans le token
  */
 exports.signToken = (payload) => {
   return jwt.sign(
-    { id: payload.id, role: payload.role },
+    payload,
     jwtSecret,
     { expiresIn: jwtExpiresIn }
   );

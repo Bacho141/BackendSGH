@@ -56,29 +56,55 @@ exports.create = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { telephone, password } = req.body;
+    console.log('🔍 Agent Login - Téléphone reçu:', telephone);
+    
     const user = await Agent.findOne({ telephone });
     if (!user) {
+      console.log('❌ Agent Login - Utilisateur non trouvé pour téléphone:', telephone);
       return res.status(401).json({ message: 'Téléphone inconnu' });
     }
+    
+    console.log('✅ Agent Login - Utilisateur trouvé:', {
+      id: user._id,
+      nom: user.nom,
+      prenom: user.prenom,
+      role: user.role
+    });
+    
     const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) {
+      console.log('❌ Agent Login - Mot de passe incorrect pour:', telephone);
       return res.status(401).json({ message: 'Mot de passe incorrect' });
     }
-    // Génère un token avec payload id + role
-    // const token = jwt.sign(
-    //   { id: user._id, role: user.role },
-    //   jwtSecret,
-    //   { expiresIn: jwtExpiresIn }
-    // );
+    
+    // Génère un token avec payload id + role + nom complet
     const role = user.role || 'Agent';
+    const nomComplet = `${user.nom} ${user.prenom}`.trim();
 
-    console.log('--- Agent Login: user.role =', user.role);
+    console.log('🔍 Agent Login - Données pour token:', {
+      id: user._id,
+      role: role,
+      nomComplet: nomComplet,
+      nom: user.nom,
+      prenom: user.prenom
+    });
 
-    const token = signToken({ id: user._id, role });
-    console.log('--- Agent Login: token payload =', require('jsonwebtoken').decode(token));
+    const tokenPayload = { 
+      id: user._id, 
+      role,
+      nomComplet: nomComplet || user._id // Fallback sur l'ID si pas de nom
+    };
+    
+    console.log('🔍 Agent Login - Payload final pour token:', tokenPayload);
+
+    const token = signToken(tokenPayload);
+    
+    const decodedToken = require('jsonwebtoken').decode(token);
+    console.log('🔍 Agent Login - Token généré et décodé:', decodedToken);
     
     return res.json({ success: true, data: { token } });
   } catch (err) {
+    console.error('❌ Agent Login - Erreur:', err);
     return res.status(500).json({ message: err.message });
   }
 };
